@@ -16,7 +16,7 @@ type Category = "lawn" | "house_wash";
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
-  | { status: "success"; leadId: number }
+  | { status: "success"; leadId: number | null; emailSent: boolean }
   | { status: "error"; message: string };
 
 export default function RequestServiceForm() {
@@ -101,7 +101,11 @@ export default function RequestServiceForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
-      setSubmit({ status: "success", leadId: data.leadId });
+      setSubmit({
+        status: "success",
+        leadId: data.leadId ?? null,
+        emailSent: Boolean(data.emailSent),
+      });
     } catch (err) {
       setSubmit({
         status: "error",
@@ -117,15 +121,20 @@ export default function RequestServiceForm() {
           Request received!
         </h3>
         <p className="mt-2 text-ink/70">
-          We&apos;ll reach out to confirm your consultation time. Want to
-          upload a few photos of your property in the meantime?
+          {submit.emailSent
+            ? "We’ll reach out to confirm your consultation time."
+            : "We’ve got your info — if you don’t hear back within a day, please call or text us directly to make sure it came through."}
+          {submit.leadId != null &&
+            " Want to upload a few photos of your property in the meantime?"}
         </p>
-        <a
-          href={`/upload-photos?lead=${submit.leadId}`}
-          className="mt-6 inline-block rounded-md bg-forest px-6 py-3 font-display font-700 uppercase tracking-wide text-bone hover:bg-forest-dark"
-        >
-          Upload Photos
-        </a>
+        {submit.leadId != null && (
+          <a
+            href={`/upload-photos?lead=${submit.leadId}`}
+            className="mt-6 inline-block rounded-md bg-forest px-6 py-3 font-display font-700 uppercase tracking-wide text-bone hover:bg-forest-dark"
+          >
+            Upload Photos
+          </a>
+        )}
       </div>
     );
   }
