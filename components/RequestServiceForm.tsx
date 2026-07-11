@@ -54,6 +54,22 @@ export default function RequestServiceForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName) {
+      setSubmit({ status: "error", message: "Please enter your name." });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setSubmit({
+        status: "error",
+        message: "Please enter a valid email address (e.g. name@example.com).",
+      });
+      return;
+    }
+
     setSubmit({ status: "submitting" });
 
     const addonNote =
@@ -64,8 +80,8 @@ export default function RequestServiceForm() {
         : "";
 
     const body = {
-      name,
-      email,
+      name: trimmedName,
+      email: trimmedEmail,
       phone,
       address,
       city,
@@ -115,7 +131,7 @@ export default function RequestServiceForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} noValidate className="space-y-8">
       <div>
         <p className="font-display text-sm font-700 uppercase tracking-wide text-forest-dark">
           1. Service category
