@@ -4,34 +4,43 @@ import {
   listPhotosForCustomer,
   listUnassignedPhotos,
 } from "@/lib/db";
+import { apiError } from "@/lib/api";
 
 export async function GET(req: NextRequest) {
-  const customerId = req.nextUrl.searchParams.get("customer_id");
-  const photos = customerId
-    ? await listPhotosForCustomer(Number(customerId))
-    : await listUnassignedPhotos();
-  return NextResponse.json({ photos });
+  try {
+    const customerId = req.nextUrl.searchParams.get("customer_id");
+    const photos = customerId
+      ? await listPhotosForCustomer(Number(customerId))
+      : await listUnassignedPhotos();
+    return NextResponse.json({ photos });
+  } catch (err) {
+    return apiError(err);
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  if (typeof body.url !== "string" || !body.url.startsWith("https://")) {
-    return NextResponse.json({ error: "Invalid url" }, { status: 400 });
+    if (typeof body.url !== "string" || !body.url.startsWith("https://")) {
+      return NextResponse.json({ error: "Invalid url" }, { status: 400 });
+    }
+    if (!body.lead_id && !body.customer_id) {
+      return NextResponse.json(
+        { error: "lead_id or customer_id is required" },
+        { status: 400 }
+      );
+    }
+
+    const photo = await addPropertyPhoto({
+      url: body.url,
+      caption: body.caption,
+      lead_id: body.lead_id ? Number(body.lead_id) : undefined,
+      customer_id: body.customer_id ? Number(body.customer_id) : undefined,
+    });
+
+    return NextResponse.json({ photo });
+  } catch (err) {
+    return apiError(err);
   }
-  if (!body.lead_id && !body.customer_id) {
-    return NextResponse.json(
-      { error: "lead_id or customer_id is required" },
-      { status: 400 }
-    );
-  }
-
-  const photo = await addPropertyPhoto({
-    url: body.url,
-    caption: body.caption,
-    lead_id: body.lead_id ? Number(body.lead_id) : undefined,
-    customer_id: body.customer_id ? Number(body.customer_id) : undefined,
-  });
-
-  return NextResponse.json({ photo });
 }
