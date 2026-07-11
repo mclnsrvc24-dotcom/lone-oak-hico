@@ -31,16 +31,7 @@ export default async function CustomerDetailPage({
       <p className="mt-1 text-ink/60">
         Customer since {new Date(customer.created_at).toLocaleDateString()}
       </p>
-
-      <a
-        href={`/upload-photos?customer=${customer.id}`}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-3 inline-block rounded-md border border-forest-dark/20 px-3 py-2 text-sm hover:bg-forest/5"
-      >
-        Share photo upload link ↗
-      </a>
-
+      
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <CustomerEditForm customer={customer} />
         <ServiceHistoryPanel customerId={customer.id} history={history} />
