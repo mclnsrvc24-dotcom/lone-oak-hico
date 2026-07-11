@@ -3,16 +3,18 @@
 // (or lets you edit before saving) the event directly on that Google
 // Calendar — no OAuth app, no token expiry, works today.
 
-function toGCalDate(date: string): string {
-  // date is 'YYYY-MM-DD'; treat as an all-day-ish 1 hour placeholder slot.
-  return date.replace(/-/g, "");
+function toGCalDate(date: string | Date): string {
+  // Accepts 'YYYY-MM-DD' or a Date (some DB drivers return DATE columns as
+  // Date objects); treated as an all-day-ish 1 hour placeholder slot.
+  const value = date instanceof Date ? date.toISOString().slice(0, 10) : date;
+  return value.replace(/-/g, "");
 }
 
 export function buildGoogleCalendarLink(input: {
   title: string;
   details: string;
   location?: string;
-  date?: string | null; // 'YYYY-MM-DD'
+  date?: string | Date | null; // 'YYYY-MM-DD'
 }): string {
   const params = new URLSearchParams({
     action: "TEMPLATE",

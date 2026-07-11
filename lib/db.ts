@@ -1,5 +1,20 @@
 import { sql } from "@vercel/postgres";
 
+// Postgres DATE columns come back from the driver as JS Date objects, not
+// strings, even though every consumer (calendar links, JSX, JSON) expects
+// 'YYYY-MM-DD'. Normalize once here so the rest of the app can trust the
+// string types declared below.
+function normalizeDate<T extends Record<string, unknown>>(
+  row: T,
+  field: keyof T
+): T {
+  const value = row[field];
+  if (value instanceof Date) {
+    return { ...row, [field]: value.toISOString().slice(0, 10) };
+  }
+  return row;
+}
+
 export type Lead = {
   id: number;
   created_at: string;
@@ -90,14 +105,14 @@ export async function createLead(input: {
     )
     RETURNING *
   `;
-  return rows[0];
+  return normalizeDate(rows[0], "preferred_date");
 }
 
 export async function listLeads(): Promise<Lead[]> {
   const { rows } = await sql<Lead>`
     SELECT * FROM leads ORDER BY created_at DESC
   `;
-  return rows;
+  return rows.map((row) => normalizeDate(row, "preferred_date"));
 }
 
 export async function updateLeadStatus(
@@ -207,7 +222,7 @@ export async function listServiceHistory(
     WHERE customer_id = ${customerId}
     ORDER BY service_date DESC
   `;
-  return rows;
+  return rows.map((row) => normalizeDate(row, "service_date"));
 }
 
 export async function addServiceHistoryEntry(input: {
@@ -223,7 +238,7 @@ export async function addServiceHistoryEntry(input: {
       ${input.price_charged ?? null}, ${input.notes ?? null})
     RETURNING *
   `;
-  return rows[0];
+  return normalizeDate(rows[0], "service_date");
 }
 
 // ---- Photos ----
@@ -272,7 +287,7 @@ export async function listTikTokPosts(): Promise<TikTokPost[]> {
       planned_date ASC,
       created_at DESC
   `;
-  return rows;
+  return rows.map((row) => normalizeDate(row, "planned_date"));
 }
 
 export async function createTikTokPost(input: {
@@ -288,7 +303,7 @@ export async function createTikTokPost(input: {
       ${input.status ?? "idea"}, ${input.notes ?? null})
     RETURNING *
   `;
-  return rows[0];
+  return normalizeDate(rows[0], "planned_date");
 }
 
 export async function updateTikTokPost(
